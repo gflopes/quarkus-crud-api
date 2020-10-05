@@ -25,8 +25,7 @@ public class TodoService {
     }
 
     public void delete(final String id) {
-        ObjectId todoId = new ObjectId(id);
-        todoRepository.deleteById(todoId);
+        todoRepository.deleteById(new ObjectId(id));
     }
 
     public void insert(final Todo todo) {
@@ -39,5 +38,11 @@ public class TodoService {
 
     public List<Todo> listaAll() {
         return todoRepository.listAll(Sort.ascending("name"));
+    }
+
+    public void setComplete(String id) {
+        Todo todo = findById(id);
+        todo.setCompleted(true);
+        todoRepository.update(todo);
     }
 }

@@ -14,10 +14,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.bson.types.ObjectId;
-
 import br.com.gustavo.entity.Todo;
 import br.com.gustavo.repository.TodoRepository;
+import br.com.gustavo.service.TodoService;
 
 @Path("/todo")
 @Produces(MediaType.APPLICATION_JSON)
@@ -27,15 +26,18 @@ public class TodoResource {
     @Inject
     TodoRepository repository;
 
+    @Inject
+    TodoService service;
+
     @GET
     public Response listAll() {
-        return Response.ok(repository.listAll()).build();
+        return Response.ok(service.listaAll()).build();
     }
 
     @GET
     @Path("/{id}")
     public Response get(@PathParam("id") String id) {
-        return Response.ok(repository.findById(new ObjectId(id))).build();
+        return Response.ok(service.findById(id)).build();
     }
 
     @POST
@@ -43,29 +45,27 @@ public class TodoResource {
         if (todo == null) {
             return Response.status(400).entity("Informe os dados da tarefa").build();
         }
-        repository.persist(todo);
+        service.insert(todo);
         return Response.ok().build();
     }
 
     @DELETE
     @Path("/{id}")
-    public Response delete(String id) {
-        repository.delete(id);
+    public Response delete(@PathParam("id") String id) {
+        service.delete(id);
         return Response.noContent().build();
     }
 
     @PUT
     public Response update(@Valid Todo todo) {
-        repository.update(todo);
+        service.update(todo);
         return Response.ok().build();
     }
 
     @PATCH
     @Path("{id}/complete")
     public Response setComplete(@PathParam("id") String id) {
-        Todo todo = repository.findById(new ObjectId(id));
-        todo.setCompleted(true);
-        repository.update(todo);
+        service.setComplete(id);
         return Response.ok().build();
     }
 }
