@@ -1,5 +1,8 @@
 package br.com.gustavo.resource;
 
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
+
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -14,6 +17,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
+import org.eclipse.microprofile.faulttolerance.Retry;
+import org.jboss.logging.Logger;
+
 import br.com.gustavo.entity.Todo;
 import br.com.gustavo.repository.TodoRepository;
 import br.com.gustavo.service.TodoService;
@@ -23,20 +30,29 @@ import br.com.gustavo.service.TodoService;
 @Consumes(MediaType.APPLICATION_JSON)
 public class TodoResource {
 
+    private static final Logger LOGGER = Logger.getLogger(TodoResource.class);
+
     @Inject
     TodoRepository repository;
 
     @Inject
     TodoService service;
 
+    private AtomicLong counter = new AtomicLong(0);
+
     @GET
+    @Retry(maxRetries = 3)
     public Response listAll() {
+        final Long invocationNumber = counter.getAndIncrement();
+        listAllFail(String.format("TodoResource#listAll() invocation #%d failed", invocationNumber));
         return Response.ok(service.listaAll()).build();
     }
 
     @GET
     @Path("/{id}")
+    @CircuitBreaker(requestVolumeThreshold = 4)
     public Response get(@PathParam("id") String id) {
+        getIdFail();
         return Response.ok(service.findById(id)).build();
     }
 
@@ -67,5 +83,19 @@ public class TodoResource {
     public Response setComplete(@PathParam("id") String id) {
         service.setComplete(id);
         return Response.ok().build();
+    }
+
+    private void listAllFail(String failureLogMessage) {
+        if (new Random().nextBoolean()) {
+            LOGGER.error(failureLogMessage);
+            throw new RuntimeException("Resource failure.");
+        }
+    }
+
+    private void getIdFail() {
+        final Long invocationNumber = counter.getAndIncrement();
+        if (invocationNumber % 4 > 1) {
+            throw new RuntimeException("Service failed.");
+        }
     }
 }
