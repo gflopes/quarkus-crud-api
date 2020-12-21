@@ -45,7 +45,7 @@ public class TodoResource {
     public Response listAll() {
         final Long invocationNumber = counter.getAndIncrement();
         listAllFail(String.format("TodoResource#listAll() invocation #%d failed", invocationNumber));
-        return Response.ok(service.listaAll()).build();
+        return Response.ok(service.listAll()).build();
     }
 
     @GET

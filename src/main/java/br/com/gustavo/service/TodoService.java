@@ -36,7 +36,7 @@ public class TodoService {
         todoRepository.update(todo);
     }
 
-    public List<Todo> listaAll() {
+    public List<Todo> listAll() {
         return todoRepository.listAll(Sort.ascending("name"));
     }
 
